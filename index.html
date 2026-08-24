@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#e88aa8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="变美日常">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<title>变美日常 · 记录工作台</title>
+<style>
+  :root {
+    --bg: #fdf6f9;
+    --card: #ffffff;
+    --primary: #e88aa8;
+    --primary-dark: #c66b8a;
+    --primary-light: #fce4ec;
+    --accent: #8ecae6;
+    --text: #3d2f35;
+    --text-light: #8a7a82;
+    --success: #7bc47f;
+    --warning: #f4a261;
+    --danger: #e76f51;
+    --shadow: 0 4px 20px rgba(232, 138, 168, 0.12);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #fdf6f9 0%, #f3e7f0 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    padding: clamp(8px, 4vw, 16px);
+    padding-top: calc(clamp(8px, 4vw, 16px) + env(safe-area-inset-top));
+    padding-bottom: calc(clamp(8px, 4vw, 16px) + env(safe-area-inset-bottom) + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    font-size: clamp(13px, 3.8vw, 16px);
+    line-height: 1.5;
+  }
+  .container { width: 100%; max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: clamp(12px, 5vw, 24px) clamp(8px, 3vw, 16px) 8px;
+  }
+  .header h1 {
+    font-size: clamp(20px, 7vw, 28px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p { color: var(--text-light); margin-top: 6px; font-size: clamp(12px, 3.5vw, 14px); }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(6px, 2.5vw, 12px);
+    margin: clamp(12px, 4vw, 20px) 0;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: clamp(10px, 3vw, var(--radius));
+    padding: clamp(8px, 3vw, 16px);
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-card .icon { font-size: clamp(18px, 5vw, 24px); }
+  .stat-card .num {
+    font-size: clamp(20px, 6vw, 28px);
+    font-weight: 700;
+    margin: 4px 0;
+    color: var(--primary-dark);
+  }
+  .stat-card .label { font-size: clamp(10px, 2.8vw, 12px); color: var(--text-light); }
+
+  /* Main Grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(10px, 3vw, 16px);
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: clamp(14px, 4.5vw, 20px);
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: clamp(15px, 4.2vw, 17px);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Checkin Buttons */
+  .checkin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(8px, 2.5vw, 10px);
+  }
+  .checkin-btn {
+    border: 2px solid var(--primary-light);
+    background: var(--card);
+    border-radius: 12px;
+    padding: clamp(10px, 3.5vw, 14px) clamp(6px, 2vw, 10px);
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    font-size: clamp(13px, 3.8vw, 14px);
+    font-weight: 500;
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .checkin-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+  }
+  .checkin-btn .emoji { font-size: clamp(22px, 7vw, 26px); display: block; margin-bottom: 4px; }
+  .checkin-btn .weekly { font-size: clamp(10px, 2.8vw, 11px); color: var(--text-light); margin-top: 2px; }
+  .checkin-btn.done-today {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .checkin-btn.done-today .weekly { color: rgba(255,255,255,0.8); }
+
+  /* 生理期标记按钮 */
+  .period-btn {
+    grid-column: 1 / -1;
+    border: 2px dashed #f4b6c8;
+    background: #fff8fa;
+    border-radius: 12px;
+    padding: clamp(10px, 3.5vw, 14px) clamp(6px, 2vw, 10px);
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    font-size: clamp(13px, 3.8vw, 14px);
+    font-weight: 500;
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .period-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .period-btn .emoji { font-size: clamp(22px, 7vw, 26px); display: block; margin-bottom: 4px; }
+  .period-btn .weekly { font-size: clamp(10px, 2.8vw, 11px); color: var(--text-light); margin-top: 2px; }
+  .period-btn.period-active {
+    background: #fde4ef;
+    border: 2px solid #f06292;
+    color: #c2185b;
+  }
+  .period-btn.period-active .weekly { color: #d81b60; }
+
+  /* 生理期豁免的健身进度条 */
+  .plan-item.period-exempt .progress-bar.period-bar { background: #f06292; }
+  .plan-item.period-exempt .count { color: #d81b60; font-weight: 600; }
+
+  /* Today summary */
+  .today-summary {
+    background: var(--primary-light);
+    border-radius: 12px;
+    padding: clamp(10px, 3vw, 12px);
+    margin-top: 14px;
+    font-size: clamp(12px, 3.3vw, 13px);
+    color: var(--text);
+    min-height: 44px;
+    word-break: break-all;
+  }
+  .today-summary .tip {
+    color: var(--warning);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* Plan list */
+  .plan-list { list-style: none; }
+  .plan-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0e0e8;
+    font-size: clamp(13px, 3.5vw, 14px);
+  }
+  .plan-item:last-child { border-bottom: none; }
+  .plan-item .name { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .plan-item .progress {
+    flex: 1;
+    max-width: 100px;
+    height: 8px;
+    background: #f0e0e8;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 8px;
+  }
+  .plan-item .progress-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+    transition: width 0.4s;
+  }
+  .plan-item .count { font-size: clamp(11px, 3vw, 12px); color: var(--text-light); white-space: nowrap; }
+  .plan-item.over-goal .progress-bar { background: var(--danger); }
+
+  /* History */
+  .history-list {
+    max-height: 320px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0e0e8;
+    font-size: clamp(13px, 3.5vw, 14px);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item .date {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 64px;
+    text-align: center;
+  }
+  .history-item .tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .tag-mud { background: #d4a574; color: white; }
+  .tag-mask { background: #b39ddb; color: white; }
+  .tag-blackhead { background: #546e7a; color: white; }
+  .tag-ipl { background: #4dd0e1; color: white; }
+  .tag-scalp { background: #4db6ac; color: white; }
+  .tag-hairmask { background: #ffb74d; color: white; }
+  .tag-handmask { background: #7986cb; color: white; }
+  .tag-hair { background: #81c784; color: white; }
+  .tag-fitness { background: #ff7043; color: white; }
+  .tag-period { background: #f06292; color: white; }
+  .history-item .del {
+    margin-left: auto;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 16px;
+    border: none;
+    background: none;
+  }
+  .history-item .del:hover { color: var(--danger); }
+  .empty-hint { text-align: center; color: var(--text-light); padding: 24px; font-size: 13px; }
+
+  /* Calendar */
+  .calendar-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: clamp(2px, 0.8vw, 4px);
+    min-width: 0;
+  }
+  .cal-head {
+    text-align: center;
+    font-size: clamp(10px, 2.8vw, 11px);
+    color: var(--text-light);
+    padding: 4px 0;
+    font-weight: 600;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: clamp(4px, 1.5vw, 6px);
+    background: #f7eef3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(9px, 2.8vw, 11px);
+    position: relative;
+    gap: 1px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .cal-day .day-num { font-weight: 600; font-size: clamp(10px, 3.2vw, 12px); }
+  .cal-day.today { background: var(--primary-light); border: 2px solid var(--primary); }
+  .cal-day .dots { display: flex; gap: 1px; flex-wrap: wrap; justify-content: center; max-width: 100%; padding: 0 2px; }
+  .cal-day .dot { width: clamp(4px, 1.5vw, 5px); height: clamp(4px, 1.5vw, 5px); border-radius: 50%; }
+  .dot-mud { background: #d4a574; }
+  .dot-mask { background: #b39ddb; }
+  .dot-blackhead { background: #546e7a; }
+  .dot-ipl { background: #4dd0e1; }
+  .dot-scalp { background: #4db6ac; }
+  .dot-hairmask { background: #ffb74d; }
+  .dot-handmask { background: #7986cb; }
+  .dot-hair { background: #81c784; }
+  .dot-fitness { background: #ff7043; }
+  .dot-period { background: #f06292; }
+  .cal-day.period-day { background: #fde4ef; }
+  .cal-day.empty { background: transparent; }
+  .cal-legend {
+    display: flex;
+    gap: clamp(8px, 3vw, 14px);
+    margin-top: 12px;
+    flex-wrap: wrap;
+    font-size: clamp(11px, 3vw, 12px);
+    color: var(--text-light);
+  }
+  .cal-legend span { display: flex; align-items: center; gap: 4px; }
+  .cal-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .cal-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .cal-nav button {
+    border: none;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 8px;
+    padding: clamp(6px, 2vw, 8px) clamp(10px, 3.5vw, 14px);
+    cursor: pointer;
+    font-size: clamp(12px, 3.3vw, 13px);
+  }
+  .cal-nav button:hover { background: var(--primary); color: white; }
+  .cal-nav .month-label { font-weight: 600; font-size: clamp(13px, 4vw, 15px); }
+
+  /* Tips banner */
+  .tips-banner {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0e9 100%);
+    border-radius: var(--radius);
+    padding: clamp(10px, 3.5vw, 14px) clamp(12px, 4vw, 18px);
+    margin-bottom: clamp(10px, 3vw, 16px);
+    font-size: clamp(11px, 3.2vw, 13px);
+    line-height: 1.6;
+    border-left: 4px solid var(--warning);
+  }
+  .tips-banner strong { color: var(--primary-dark); }
+
+  .footer {
+    text-align: center;
+    margin-top: clamp(16px, 5vw, 24px);
+    font-size: clamp(11px, 3vw, 12px);
+    color: var(--text-light);
+    padding-bottom: 8px;
+  }
+  .footer button {
+    border: 1px solid var(--primary-light);
+    background: white;
+    color: var(--text-light);
+    border-radius: 8px;
+    padding: clamp(5px, 1.8vw, 6px) clamp(10px, 3.5vw, 14px);
+    cursor: pointer;
+    margin: 4px 4px;
+    font-size: clamp(11px, 3vw, 12px);
+  }
+  .footer button:hover { background: var(--primary-light); }
+
+  /* ===== 响应式断点 ===== */
+  /* 平板及以下：主网格变单列 */
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  /* 手机：统计卡保持4列但更紧凑，打卡按钮字号微调 */
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .stat-card { padding: 8px 4px; }
+    .stat-card .num { font-size: 20px; }
+    .stat-card .label { font-size: 10px; }
+    .checkin-btn { padding: 10px 6px; }
+    .history-item .date { min-width: 52px; font-size: 11px; }
+    .cal-nav button { padding: 6px 10px; }
+  }
+  /* 超小屏（iPhone SE 等 320-360px）：统计卡变2列 */
+  @media (max-width: 360px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .stat-card .num { font-size: 22px; }
+    .header h1 { font-size: 19px; }
+    .card { padding: 12px; }
+  }
+  /* 横屏适配 */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .header { padding: 8px 16px 4px; }
+    .stats-row { margin: 10px 0; }
+    .tips-banner { margin-bottom: 8px; padding: 8px 14px; }
+  }
+  /* 大屏优化 */
+  @media (min-width: 1000px) {
+    .container { max-width: 1000px; }
+    .main-grid { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>✨ 变美日常 · 记录工作台</h1>
+    <p>坚持，是对自己最好的温柔</p>
+  </div>
+
+  <!-- Tips Banner -->
+  <div class="tips-banner" id="tipsBanner">
+    <span id="tipsContent">加载中...</span>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Left: Checkin + Plan -->
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h2>📝 今日打卡</h2>
+        <div class="checkin-grid" id="checkinGrid"></div>
+        <div class="today-summary" id="todaySummary"></div>
+      </div>
+
+      <div class="card">
+        <h2>📊 本周计划进度</h2>
+        <ul class="plan-list" id="planList"></ul>
+      </div>
+    </div>
+
+    <!-- Right: Calendar + History -->
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h2>📅 变美日历</h2>
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">‹ 上月</button>
+          <span class="month-label" id="monthLabel"></span>
+          <button onclick="changeMonth(1)">下月 ›</button>
+        </div>
+        <div class="calendar-wrap">
+          <div class="calendar" id="calendar"></div>
+        </div>
+        <div class="cal-legend" id="calLegend"></div>
+      </div>
+
+      <div class="card">
+        <h2>🗂️ 历史记录</h2>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>数据保存在本地浏览器 · 💾 </span>
+    <button onclick="exportData()">导出数据</button>
+    <button onclick="confirmClear()">清空记录</button>
+  </div>
+</div>
+
+<script>
+// ===== 数据模型 =====
+const PROJECTS = {
+  mud:      { name: '泥膜',     emoji: '🟤', weeklyGoal: 2, tag: 'tag-mud',      dot: 'dot-mud',      note: '与面膜同日互斥' },
+  mask:     { name: '面膜',     emoji: '🟣', weeklyGoal: 3, tag: 'tag-mask',     dot: 'dot-mask',     note: '与泥膜同日互斥' },
+  blackhead:{ name: '去黑头',   emoji: '⚫', weeklyGoal: 1, tag: 'tag-blackhead',dot: 'dot-blackhead',note: '去完当天要敷面膜' },
+  ipl:      { name: '光子嫩肤', emoji: '💡', weeklyGoal: 1, tag: 'tag-ipl',      dot: 'dot-ipl',      note: '' },
+  scalp:    { name: '头皮清洁', emoji: '🫧', weeklyGoal: 1, tag: 'tag-scalp',    dot: 'dot-scalp',    note: '' },
+  hairmask: { name: '发膜',     emoji: '💇‍♀️', weeklyGoal: 1, tag: 'tag-hairmask', dot: 'dot-hairmask',note: '' },
+  handmask: { name: '手膜',     emoji: '🤲', weeklyGoal: 1, tag: 'tag-handmask', dot: 'dot-handmask',note: '可与去黑头/面膜同日' },
+  hair:     { name: '脱毛',     emoji: '🪒', weeklyGoal: 1, tag: 'tag-hair',     dot: 'dot-hair',     note: '' },
+  fitness:  { name: '健身',     emoji: '🏃‍♀️', weeklyGoal: 3, tag: 'tag-fitness',  dot: 'dot-fitness',  note: '生理期可豁免', minGoal: true }
+};
+
+// 特殊标记：生理期（不计入常规项目，用于豁免健身）
+const PERIOD_KEY = 'period';
+const PERIOD_META = { name: '生理期', emoji: '🌸', tag: 'tag-period', dot: 'dot-period' };
+
+// 互斥规则：泥膜当天不能敷面膜
+const MUTEX = {
+  mud: ['mask'],
+  mask: ['mud']
+};
+
+// 依赖规则：去黑头 → 当天需要敷面膜
+const DEPENDS = {
+  blackhead: 'mask'
+};
+
+const STORAGE_KEY = 'beauty_diary_records_v1';
+
+// ===== 存储 =====
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function saveRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+let records = loadRecords();
+
+// ===== 日期工具 =====
+function todayStr() {
+  const d = new Date();
+  return fmt(d);
+}
+function fmt(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+// 获取本周一为起点的7天
+function getWeekRange(dateStr) {
+  const d = parseDate(dateStr);
+  const day = d.getDay(); // 0=周日
+  const offset = day === 0 ? -6 : 1 - day; // 周一为起点
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + offset);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { start: monday, end: sunday };
+}
+function isSameDay(a, b) { return a === b; }
+
+// ===== 打卡逻辑 =====
+function checkin(project) {
+  const today = todayStr();
+  const existing = records.filter(r => r.date === today && r.project === project);
+
+  // 互斥检查
+  const mutexList = MUTEX[project] || [];
+  const conflict = records.find(r => r.date === today && mutexList.includes(r.project));
+  if (conflict) {
+    const p = PROJECTS[conflict.project];
+    const cur = PROJECTS[project];
+    alert(`⚠️ 规则提醒：今天已经打了「${p.name}」的卡\n${p.name}和${cur.name}同日不能同时进行哦~`);
+    return;
+  }
+
+  // 去黑头特殊检查：当天已敷泥膜的话，面膜会被互斥，去黑头后没法敷面膜收敛
+  if (project === 'blackhead') {
+    const hasMud = records.some(r => r.date === today && r.project === 'mud');
+    const hasMask = records.some(r => r.date === today && r.project === 'mask');
+    if (hasMud && !hasMask) {
+      const go = confirm('今天已经敷过泥膜了，敷泥膜当天不能敷面膜。\n去黑头后需要敷面膜收敛毛孔，建议明天再去黑头。\n\n仍要打卡去黑头吗？');
+      if (!go) return;
+    }
+  }
+
+  // 防重复
+  if (existing.length > 0) {
+    alert('今天这个项目已经打过卡啦~');
+    return;
+  }
+
+  records.push({ date: today, project, time: Date.now() });
+  saveRecords(records);
+  render();
+
+  // 打卡成功后的关联提醒
+  if (project === 'blackhead') {
+    const hasMask = records.some(r => r.date === today && r.project === 'mask');
+    if (!hasMask) {
+      alert('⚫ 去黑头完成！\n记得今天要敷面膜收敛毛孔哦～收缩镇静一下 💜');
+    }
+  }
+  if (project === 'mask') {
+    const hasBH = records.some(r => r.date === today && r.project === 'blackhead');
+    if (hasBH) {
+      alert('✨ 完美搭配！\n去黑头 + 敷面膜，毛孔收敛到位，今天护理满分！');
+    }
+  }
+}
+
+// 生理期标记：本周豁免健身（toggle 模式，当天再点一次取消）
+function togglePeriod() {
+  const today = todayStr();
+  const existing = records.find(r => r.date === today && r.project === PERIOD_KEY);
+  if (existing) {
+    records = records.filter(r => r.time !== existing.time);
+    saveRecords(records);
+    render();
+    return;
+  }
+  records.push({ date: today, project: PERIOD_KEY, time: Date.now() });
+  saveRecords(records);
+  render();
+  alert('🌸 已标记生理期\n本周健身目标自动豁免，好好休息～\n（再次点击可取消标记）');
+}
+
+function deleteRecord(time) {
+  records = records.filter(r => r.time !== time);
+  saveRecords(records);
+  render();
+}
+
+// ===== 统计本周 =====
+function weekStats(dateStr) {
+  const { start, end } = getWeekRange(dateStr);
+  const startStr = fmt(start), endStr = fmt(end);
+  const weekRecords = records.filter(r => r.date >= startStr && r.date <= endStr);
+  const stats = {};
+  Object.keys(PROJECTS).forEach(k => stats[k] = 0);
+  weekRecords.forEach(r => { if (stats[r.project] !== undefined) stats[r.project]++; });
+  return stats;
+}
+
+// 本周是否处于生理期（有任意一天标记）
+function isPeriodWeek(dateStr) {
+  const { start, end } = getWeekRange(dateStr || todayStr());
+  const startStr = fmt(start), endStr = fmt(end);
+  return records.some(r => r.project === PERIOD_KEY && r.date >= startStr && r.date <= endStr);
+}
+
+function todayRecords() {
+  const today = todayStr();
+  return records.filter(r => r.date === today);
+}
+
+// ===== 渲染 =====
+function render() {
+  renderStats();
+  renderCheckin();
+  renderTodaySummary();
+  renderPlan();
+  renderHistory();
+  renderCalendar();
+  renderTips();
+}
+
+function renderStats() {
+  const today = todayRecords().filter(r => r.project !== PERIOD_KEY);
+  const week = weekStats(todayStr());
+  const total = records.filter(r => r.project !== PERIOD_KEY).length;
+  const totalDays = new Set(records.map(r => r.date)).size;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="icon">📅</div><div class="num">${totalDays}</div><div class="label">坚持天数</div></div>
+    <div class="stat-card"><div class="icon">✅</div><div class="num">${today.length}</div><div class="label">今日打卡</div></div>
+    <div class="stat-card"><div class="icon">🌿</div><div class="num">${week.mud + week.mask}</div><div class="label">本周敷脸</div></div>
+    <div class="stat-card"><div class="icon">🏆</div><div class="num">${total}</div><div class="label">累计次数</div></div>
+  `;
+}
+
+function renderCheckin() {
+  const today = todayStr();
+  const todayRecs = todayRecords();
+  const doneSet = new Set(todayRecs.map(r => r.project));
+
+  const html = Object.entries(PROJECTS).map(([key, p]) => {
+    const done = doneSet.has(key);
+    const mutex = MUTEX[key] || [];
+    const blocked = mutex.some(m => doneSet.has(m));
+    const cls = done ? 'checkin-btn done-today' : 'checkin-btn';
+    const onClick = (done || blocked) ? '' : `onclick="checkin('${key}')"`;
+    const blockedTip = blocked ? `<div style="font-size:11px;color:var(--danger);margin-top:2px;">今日互斥</div>` : '';
+    const noteTip = (!done && !blocked && p.note) ? `<div style="font-size:10px;color:var(--text-light);margin-top:2px;">${p.note}</div>` : '';
+    return `
+      <div class="${cls}" ${onClick}>
+        <span class="emoji">${p.emoji}</span>
+        <div>${p.name}</div>
+        <div class="weekly">${p.minGoal ? '至少' : '目标'} ${p.weeklyGoal} 次/周</div>
+        ${done ? '<div style="font-size:11px;margin-top:2px;">✓ 已打卡</div>' : blockedTip}
+        ${noteTip}
+      </div>
+    `;
+  }).join('');
+
+  // 生理期标记按钮（toggle）
+  const periodActive = doneSet.has(PERIOD_KEY);
+  const periodBtn = `
+    <div class="period-btn ${periodActive ? 'period-active' : ''}" onclick="togglePeriod()">
+      <span class="emoji">${PERIOD_META.emoji}</span>
+      <div>${periodActive ? '已标记生理期（点此取消）' : '标记生理期'}</div>
+      <div class="weekly">${periodActive ? '本周健身已豁免' : '本周健身自动豁免'}</div>
+    </div>
+  `;
+
+  document.getElementById('checkinGrid').innerHTML = html + periodBtn;
+}
+
+function renderTodaySummary() {
+  const todayRecs = todayRecords();
+  const el = document.getElementById('todaySummary');
+  if (todayRecs.length === 0) {
+    el.innerHTML = '今天还没有打卡哦～选一个开始吧 💕';
+    return;
+  }
+  const items = todayRecs.map(r => {
+    if (r.project === PERIOD_KEY) {
+      return `<span class="tag ${PERIOD_META.tag}" style="margin-right:6px;">${PERIOD_META.emoji} ${PERIOD_META.name}</span>`;
+    }
+    const p = PROJECTS[r.project];
+    return `<span class="tag ${p.tag}" style="margin-right:6px;">${p.emoji} ${p.name}</span>`;
+  }).join('');
+  // 去黑头未配面膜提醒
+  const hasBH = todayRecs.some(r => r.project === 'blackhead');
+  const hasMask = todayRecs.some(r => r.project === 'mask');
+  const bhTip = (hasBH && !hasMask) ? '<div class="tip">⚫ 去了黑头还没敷面膜，记得今天敷面膜收敛毛孔哦～</div>' : '';
+  el.innerHTML = `今日已做：${items}${bhTip}`;
+}
+
+function renderPlan() {
+  const stats = weekStats(todayStr());
+  const periodWeek = isPeriodWeek();
+  const html = Object.entries(PROJECTS).map(([key, p]) => {
+    const count = stats[key];
+    const goal = p.weeklyGoal;
+    const pct = Math.min(100, (count / goal) * 100);
+    const overGoal = !p.minGoal && count > goal;
+
+    // 生理期豁免：健身本周未达标且处于生理期周
+    if (p.minGoal && periodWeek && count < goal) {
+      return `
+        <li class="plan-item period-exempt">
+          <span class="name">${p.emoji} ${p.name} ${PERIOD_META.emoji}</span>
+          <div class="progress"><div class="progress-bar period-bar" style="width:${pct}%"></div></div>
+          <span class="count">生理期豁免 🌸</span>
+        </li>
+      `;
+    }
+
+    const status = count >= goal ? '✅' : (overGoal ? '⚠️' : '⏳');
+    return `
+      <li class="plan-item ${overGoal ? 'over-goal' : ''}">
+        <span class="name">${p.emoji} ${p.name}</span>
+        <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <span class="count">${count}/${goal}${p.minGoal ? '+' : ''} ${status}</span>
+      </li>
+    `;
+  }).join('');
+  document.getElementById('planList').innerHTML = html;
+}
+
+function renderHistory() {
+  const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date) || b.time - a.time);
+  const el = document.getElementById('historyList');
+  if (sorted.length === 0) {
+    el.innerHTML = '<div class="empty-hint">还没有记录，开始你的第一次打卡吧 🌸</div>';
+    return;
+  }
+  // 按日期分组
+  const grouped = {};
+  sorted.forEach(r => {
+    if (!grouped[r.date]) grouped[r.date] = [];
+    grouped[r.date].push(r);
+  });
+
+  const html = Object.entries(grouped).map(([date, recs]) => {
+    const tags = recs.map(r => {
+      if (r.project === PERIOD_KEY) {
+        return `<span class="tag ${PERIOD_META.tag}">${PERIOD_META.emoji} ${PERIOD_META.name}</span>`;
+      }
+      const p = PROJECTS[r.project];
+      return `<span class="tag ${p.tag}">${p.emoji} ${p.name}</span>`;
+    }).join(' ');
+    const dels = recs.map(r => `<button class="del" onclick="deleteRecord(${r.time})" title="删除">×</button>`).join(' ');
+    return `<div class="history-item"><span class="date">${date.slice(5)}</span>${tags}<span class="del-group">${dels}</span></div>`;
+  }).join('');
+  el.innerHTML = html;
+}
+
+// ===== 日历 =====
+let calYear, calMonth;
+function initCal() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+}
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+function renderCalendar() {
+  const monthLabel = `${calYear}年${calMonth+1}月`;
+  document.getElementById('monthLabel').textContent = monthLabel;
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth+1, 0);
+  const startWeekday = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // 周一为起点
+  const daysInMonth = lastDay.getDate();
+  const today = todayStr();
+
+  const heads = ['一','二','三','四','五','六','日'];
+  let html = heads.map(h => `<div class="cal-head">${h}</div>`).join('');
+
+  for (let i = 0; i < startWeekday; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayRecs = records.filter(r => r.date === dateStr);
+    const dots = dayRecs.map(r => {
+      const dotCls = r.project === PERIOD_KEY ? PERIOD_META.dot : (PROJECTS[r.project] ? PROJECTS[r.project].dot : '');
+      return `<span class="dot ${dotCls}"></span>`;
+    }).join('');
+    const isToday = dateStr === today ? 'today' : '';
+    const isPeriod = dayRecs.some(r => r.project === PERIOD_KEY) ? 'period-day' : '';
+    html += `<div class="cal-day ${isToday} ${isPeriod}"><span class="day-num">${d}</span><div class="dots">${dots}</div></div>`;
+  }
+  document.getElementById('calendar').innerHTML = html;
+
+  // Legend
+  const legend = Object.entries(PROJECTS).map(([k, p]) =>
+    `<span><span class="dot ${p.dot}"></span>${p.name}</span>`
+  ).join('') + `<span><span class="dot ${PERIOD_META.dot}"></span>${PERIOD_META.name}</span>`;
+  document.getElementById('calLegend').innerHTML = legend;
+}
+
+// ===== 智能提示 =====
+function renderTips() {
+  const stats = weekStats(todayStr());
+  const periodWeek = isPeriodWeek();
+  const tips = [];
+
+  Object.entries(PROJECTS).forEach(([key, p]) => {
+    if (stats[key] < p.weeklyGoal) {
+      // 生理期周健身豁免，不提示
+      if (key === 'fitness' && periodWeek) return;
+      tips.push(`${p.emoji} ${p.name}还差 ${p.weeklyGoal - stats[key]} 次`);
+    }
+  });
+
+  // 今天去了黑头但没敷面膜
+  const today = todayStr();
+  const hasBH = records.some(r => r.date === today && r.project === 'blackhead');
+  const hasMask = records.some(r => r.date === today && r.project === 'mask');
+  const bhTip = (hasBH && !hasMask) ? '｜⚫ 今日去黑头后待敷面膜' : '';
+
+  const rules = [
+    '🚫 泥膜面膜同日互斥',
+    '⚫ 去黑头后当天敷面膜',
+    '🌸 生理期健身豁免'
+  ].join('｜');
+
+  const el = document.getElementById('tipsContent');
+  const periodBadge = periodWeek ? `<strong>🌸 生理期中，健身豁免</strong>　` : '';
+
+  if (tips.length === 0) {
+    el.innerHTML = `${periodBadge}<strong>🎉 本周计划全部完成！</strong> 好棒，继续保持这个节奏～${bhTip}`;
+  } else {
+    el.innerHTML = `<strong>💡 本周待完成：</strong>${tips.join('，')}${bhTip}　|　<strong>${rules}</strong>`;
+  }
+}
+
+// ===== 导出 / 清空 =====
+function exportData() {
+  const data = JSON.stringify(records, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `变美记录_${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function confirmClear() {
+  if (confirm('确定要清空所有记录吗？此操作不可恢复！')) {
+    if (confirm('再次确认：真的要清空全部数据吗？')) {
+      records = [];
+      saveRecords(records);
+      render();
+    }
+  }
+}
+
+// ===== Service Worker 注册 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW注册失败:', err));
+}
+
+// ===== 初始化 =====
+initCal();
+render();
+</script>
+</body>
+</html>
