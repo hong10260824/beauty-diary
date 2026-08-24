@@ -1,5 +1,5 @@
 // Service Worker - 变美日常 PWA
-const CACHE_NAME = 'beauty-diary-v2';
+const CACHE_NAME = 'beauty-diary-v3';
 const ASSETS = [
   './',
   './index.html',

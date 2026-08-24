@@ -382,6 +382,123 @@
   }
   .footer button:hover { background: var(--primary-light); }
 
+  /* ===== 日期补卡弹窗（底部抽屉） ===== */
+  .modal-mask {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(61, 47, 53, 0.45);
+    z-index: 1000;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .modal-mask.show { display: block; }
+  .modal-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+    z-index: 1001;
+    max-height: 82vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: sheetUp 0.28s ease-out;
+    box-shadow: 0 -8px 40px rgba(61, 47, 53, 0.18);
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(60%); opacity: 0.5; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .sheet-handle {
+    width: 40px; height: 4px; border-radius: 2px;
+    background: #e5d5dd; margin: 0 auto 12px;
+  }
+  .sheet-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .sheet-title .date-label { font-size: 17px; font-weight: 700; }
+  .sheet-title .date-sub { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .sheet-close {
+    border: none; background: var(--primary-light); color: var(--primary-dark);
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 16px; cursor: pointer; flex-shrink: 0;
+  }
+  .sheet-section { margin-top: 14px; }
+  .sheet-section h3 {
+    font-size: 13px; color: var(--text-light); font-weight: 600;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .sheet-done-list {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .done-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 20px; padding: 6px 6px 6px 12px;
+    font-size: 13px; font-weight: 500; color: white;
+  }
+  .done-chip .chip-del {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.3); color: white;
+    font-size: 13px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sheet-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 400px) { .sheet-grid { grid-template-columns: repeat(2, 1fr); } }
+  .sheet-btn {
+    border: 1.5px solid var(--primary-light);
+    background: var(--card);
+    border-radius: 10px;
+    padding: 10px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    -webkit-appearance: none; appearance: none;
+  }
+  .sheet-btn:active { background: var(--primary-light); }
+  .sheet-btn .emoji { display: block; font-size: 22px; margin-bottom: 3px; }
+  .sheet-btn.blocked {
+    opacity: 0.45; cursor: not-allowed;
+    border-color: #f0e0e8; background: #faf5f8;
+  }
+  .sheet-btn.blocked .block-tip { font-size: 10px; color: var(--danger); }
+  .sheet-btn.done {
+    background: var(--success); border-color: var(--success); color: white;
+    opacity: 0.6; cursor: default;
+  }
+  .sheet-period-toggle {
+    width: 100%;
+    margin-top: 10px;
+    border: 2px dashed #f4b6c8;
+    background: #fff8fa;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    -webkit-appearance: none; appearance: none;
+  }
+  .sheet-period-toggle.active {
+    background: #fde4ef; border: 2px solid #f06292; color: #c2185b;
+  }
+  .sheet-hint {
+    font-size: 12px; color: var(--text-light);
+    background: var(--primary-light);
+    border-radius: 8px; padding: 8px 12px; margin-top: 12px;
+  }
+  .cal-day.clickable { cursor: pointer; }
+  .cal-day.clickable:active { transform: scale(0.92); background: var(--primary-light); }
+
   /* ===== 响应式断点 ===== */
   /* 平板及以下：主网格变单列 */
   @media (max-width: 700px) {
@@ -477,6 +594,20 @@
   </div>
 </div>
 
+<!-- 日期补卡弹窗 -->
+<div class="modal-mask" id="dayModalMask" onclick="closeDayModal()"></div>
+<div class="modal-sheet" id="dayModalSheet" style="display:none">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">
+    <div>
+      <div class="date-label" id="sheetDateLabel"></div>
+      <div class="date-sub" id="sheetDateSub"></div>
+    </div>
+    <button class="sheet-close" onclick="closeDayModal()">×</button>
+  </div>
+  <div id="sheetBody"></div>
+</div>
+
 <script>
 // ===== 数据模型 =====
 const PROJECTS = {
@@ -549,69 +680,74 @@ function getWeekRange(dateStr) {
 function isSameDay(a, b) { return a === b; }
 
 // ===== 打卡逻辑 =====
-function checkin(project) {
-  const today = todayStr();
-  const existing = records.filter(r => r.date === today && r.project === project);
+// dateStr 支持补卡：不传默认今天
+function checkin(project, dateStr) {
+  const day = dateStr || todayStr();
+  const isBackfill = day !== todayStr();
+  const dayLabel = isBackfill ? day : '今天';
+  const existing = records.filter(r => r.date === day && r.project === project);
 
   // 互斥检查
   const mutexList = MUTEX[project] || [];
-  const conflict = records.find(r => r.date === today && mutexList.includes(r.project));
+  const conflict = records.find(r => r.date === day && mutexList.includes(r.project));
   if (conflict) {
     const p = PROJECTS[conflict.project];
     const cur = PROJECTS[project];
-    alert(`⚠️ 规则提醒：今天已经打了「${p.name}」的卡\n${p.name}和${cur.name}同日不能同时进行哦~`);
+    alert(`⚠️ 规则提醒：${dayLabel}已经打了「${p.name}」的卡\n${p.name}和${cur.name}同日不能同时进行哦~`);
     return;
   }
 
   // 去黑头特殊检查：当天已敷泥膜的话，面膜会被互斥，去黑头后没法敷面膜收敛
   if (project === 'blackhead') {
-    const hasMud = records.some(r => r.date === today && r.project === 'mud');
-    const hasMask = records.some(r => r.date === today && r.project === 'mask');
+    const hasMud = records.some(r => r.date === day && r.project === 'mud');
+    const hasMask = records.some(r => r.date === day && r.project === 'mask');
     if (hasMud && !hasMask) {
-      const go = confirm('今天已经敷过泥膜了，敷泥膜当天不能敷面膜。\n去黑头后需要敷面膜收敛毛孔，建议明天再去黑头。\n\n仍要打卡去黑头吗？');
+      const go = confirm(`${dayLabel}已经敷过泥膜了，敷泥膜当天不能敷面膜。\n去黑头后需要敷面膜收敛毛孔，建议换个日期再去黑头。\n\n仍要打卡去黑头吗？`);
       if (!go) return;
     }
   }
 
   // 防重复
   if (existing.length > 0) {
-    alert('今天这个项目已经打过卡啦~');
+    alert(`${dayLabel}这个项目已经打过卡啦~`);
     return;
   }
 
-  records.push({ date: today, project, time: Date.now() });
+  records.push({ date: day, project, time: Date.now() });
   saveRecords(records);
   render();
 
   // 打卡成功后的关联提醒
   if (project === 'blackhead') {
-    const hasMask = records.some(r => r.date === today && r.project === 'mask');
+    const hasMask = records.some(r => r.date === day && r.project === 'mask');
     if (!hasMask) {
-      alert('⚫ 去黑头完成！\n记得今天要敷面膜收敛毛孔哦～收缩镇静一下 💜');
+      alert(`⚫ 去黑头完成！\n记得${dayLabel}要敷面膜收敛毛孔哦～收缩镇静一下 💜`);
     }
   }
   if (project === 'mask') {
-    const hasBH = records.some(r => r.date === today && r.project === 'blackhead');
+    const hasBH = records.some(r => r.date === day && r.project === 'blackhead');
     if (hasBH) {
-      alert('✨ 完美搭配！\n去黑头 + 敷面膜，毛孔收敛到位，今天护理满分！');
+      alert(`✨ 完美搭配！\n${dayLabel}去黑头 + 敷面膜，毛孔收敛到位，护理满分！`);
     }
   }
 }
 
 // 生理期标记：本周豁免健身（toggle 模式，当天再点一次取消）
-function togglePeriod() {
-  const today = todayStr();
-  const existing = records.find(r => r.date === today && r.project === PERIOD_KEY);
+function togglePeriod(dateStr) {
+  const day = dateStr || todayStr();
+  const existing = records.find(r => r.date === day && r.project === PERIOD_KEY);
   if (existing) {
     records = records.filter(r => r.time !== existing.time);
     saveRecords(records);
     render();
     return;
   }
-  records.push({ date: today, project: PERIOD_KEY, time: Date.now() });
+  records.push({ date: day, project: PERIOD_KEY, time: Date.now() });
   saveRecords(records);
   render();
-  alert('🌸 已标记生理期\n本周健身目标自动豁免，好好休息～\n（再次点击可取消标记）');
+  if (!dateStr || dateStr === todayStr()) {
+    alert('🌸 已标记生理期\n本周健身目标自动豁免，好好休息～\n（再次点击可取消标记）');
+  }
 }
 
 function deleteRecord(time) {
@@ -652,6 +788,8 @@ function render() {
   renderHistory();
   renderCalendar();
   renderTips();
+  // 补卡弹窗开着时同步刷新
+  if (modalDate) renderSheet(modalDate);
 }
 
 function renderStats() {
@@ -822,7 +960,9 @@ function renderCalendar() {
     }).join('');
     const isToday = dateStr === today ? 'today' : '';
     const isPeriod = dayRecs.some(r => r.project === PERIOD_KEY) ? 'period-day' : '';
-    html += `<div class="cal-day ${isToday} ${isPeriod}"><span class="day-num">${d}</span><div class="dots">${dots}</div></div>`;
+    const clickable = dateStr <= today ? 'clickable' : '';
+    const tip = dateStr > today ? 'title="未来的日子还不能打卡哦"' : 'title="点击查看/补卡"';
+    html += `<div class="cal-day ${isToday} ${isPeriod} ${clickable}" ${tip} onclick="openDayModal('${dateStr}')"><span class="day-num">${d}</span><div class="dots">${dots}</div></div>`;
   }
   document.getElementById('calendar').innerHTML = html;
 
@@ -867,6 +1007,100 @@ function renderTips() {
   } else {
     el.innerHTML = `<strong>💡 本周待完成：</strong>${tips.join('，')}${bhTip}　|　<strong>${rules}</strong>`;
   }
+}
+
+// ===== 日期补卡弹窗 =====
+let modalDate = null;
+
+function openDayModal(dateStr) {
+  modalDate = dateStr;
+  document.getElementById('dayModalMask').classList.add('show');
+  const sheet = document.getElementById('dayModalSheet');
+  sheet.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  renderSheet(dateStr);
+}
+
+function closeDayModal() {
+  modalDate = null;
+  document.getElementById('dayModalMask').classList.remove('show');
+  document.getElementById('dayModalSheet').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderSheet(dateStr) {
+  const d = parseDate(dateStr);
+  const weekdays = ['日','一','二','三','四','五','六'];
+  const today = todayStr();
+  const isToday = dateStr === today;
+  const isFuture = dateStr > today;
+  const dayTag = isToday ? '今天' : (isFuture ? '未来' : '补卡');
+  const dayTagColor = isToday ? 'var(--primary-dark)' : (isFuture ? 'var(--text-light)' : 'var(--warning)');
+
+  document.getElementById('sheetDateLabel').textContent = `${d.getMonth()+1}月${d.getDate()}日`;
+  document.getElementById('sheetDateSub').innerHTML = `星期${weekdays[d.getDay()]} · <span style="color:${dayTagColor};font-weight:600">${dayTag}</span>`;
+
+  const body = document.getElementById('sheetBody');
+
+  // 未来日期：只读提示
+  if (isFuture) {
+    body.innerHTML = `<div class="sheet-hint">⏳ 未来的日子还不能打卡哦～<br>等到了那天再来记录吧 💕</div>`;
+    return;
+  }
+
+  const dayRecs = records.filter(r => r.date === dateStr);
+  const doneSet = new Set(dayRecs.map(r => r.project));
+
+  // 已打卡区
+  let doneHtml = '';
+  if (dayRecs.length > 0) {
+    const chips = dayRecs.map(r => {
+      if (r.project === PERIOD_KEY) {
+        return `<span class="done-chip" style="background:#f06292">${PERIOD_META.emoji} ${PERIOD_META.name}<button class="chip-del" onclick="deleteRecord(${r.time})">×</button></span>`;
+      }
+      const p = PROJECTS[r.project];
+      return `<span class="done-chip" style="background:${chipColor(r.project)}">${p.emoji} ${p.name}<button class="chip-del" onclick="deleteRecord(${r.time})">×</button></span>`;
+    }).join('');
+    doneHtml = `<div class="sheet-section"><h3>✅ 当天已记录（点 × 可删除）</h3><div class="sheet-done-list">${chips}</div></div>`;
+  } else {
+    doneHtml = `<div class="sheet-section"><h3>✅ 当天记录</h3><div class="sheet-hint" style="background:#f7eef3">这一天还没有记录${isToday ? '，下面直接打卡～' : '，可以在下方补卡～'}</div></div>`;
+  }
+
+  // 可打卡区（规则同今日打卡）
+  const btns = Object.entries(PROJECTS).map(([key, p]) => {
+    const done = doneSet.has(key);
+    const mutex = MUTEX[key] || [];
+    const blocked = mutex.some(m => doneSet.has(m));
+    if (done) {
+      return `<div class="sheet-btn done"><span class="emoji">${p.emoji}</span>${p.name}<div style="font-size:10px;margin-top:2px;">✓ 已打卡</div></div>`;
+    }
+    if (blocked) {
+      return `<div class="sheet-btn blocked"><span class="emoji">${p.emoji}</span>${p.name}<div class="block-tip">互斥</div></div>`;
+    }
+    return `<div class="sheet-btn" onclick="checkin('${key}','${dateStr}')"><span class="emoji">${p.emoji}</span>${p.name}</div>`;
+  }).join('');
+
+  // 生理期 toggle
+  const periodActive = doneSet.has(PERIOD_KEY);
+  const periodBtn = `<button class="sheet-period-toggle ${periodActive ? 'active' : ''}" onclick="togglePeriod('${dateStr}')">${PERIOD_META.emoji} ${periodActive ? '已标记生理期 · 点此取消' : '标记生理期（豁免本周健身）'}</button>`;
+
+  const tips = [];
+  // 去黑头未配面膜提醒
+  if (doneSet.has('blackhead') && !doneSet.has('mask')) tips.push('⚫ 去了黑头还没敷面膜，记得当天补上面膜哦');
+  if (doneSet.has('mud') && doneSet.has('mask')) tips.push('⚠️ 泥膜和面膜同日都打了，不符合互斥规则，建议删掉一个');
+  const tipHtml = tips.length ? `<div class="sheet-hint">${tips.join('<br>')}</div>` : '';
+
+  body.innerHTML = `${doneHtml}<div class="sheet-section"><h3>${isToday ? '📝 继续打卡' : '📝 补卡'}</h3><div class="sheet-grid">${btns}</div>${periodBtn}${tipHtml}</div>`;
+}
+
+// 各项目 chip 背景色（与 tag 一致）
+function chipColor(key) {
+  const colors = {
+    mud: '#d4a574', mask: '#b39ddb', blackhead: '#546e7a', ipl: '#4dd0e1',
+    scalp: '#4db6ac', hairmask: '#ffb74d', handmask: '#7986cb',
+    hair: '#81c784', fitness: '#ff7043'
+  };
+  return colors[key] || '#b39ddb';
 }
 
 // ===== 导出 / 清空 =====
